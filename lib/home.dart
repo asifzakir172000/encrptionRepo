@@ -40,7 +40,7 @@ class _EncryptionScreenState extends State<EncryptionScreen> {
                print("decryptedData: $de");
               //ApiClient.instance.myRepositoryMethod(encyptRequest);
               final key = EncryptUtils.instance.getSecretKey();
-              var sKey = await EncryptUtils.instance.encryptSecretKey(msg: key);
+              var sKey = await EncryptUtils.instance.encryptSecretKey(key: key.base64);
               print("sKey: ${sKey.base64}");
 
               },
