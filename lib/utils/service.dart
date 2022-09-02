@@ -32,7 +32,7 @@ class ApiClient {
     }
     return checked;
   } catch (error) {
-    print('SSL Pinning Error $error');
+    debugPrint('SSL Pinning Error $error');
     return false;
   }
 }

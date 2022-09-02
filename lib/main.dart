@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 void main() async {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -20,6 +22,8 @@ class MyApp extends StatelessWidget {
 }
 
 class HomePage extends StatefulWidget {
+  const HomePage({Key? key}) : super(key: key);
+
   @override
   _HomePageState createState() => _HomePageState();
 }
@@ -41,13 +45,13 @@ class _HomePageState extends State<HomePage> {
           'key': key,
         },
       );
-      print('RETURNED FROM PLATFORM');
-      print(result);
+      debugPrint('RETURNED FROM PLATFORM');
+      debugPrint(result);
       setState(() {
         encryptedData = result;
       });
     } on PlatformException catch (e) {
-      print('${e.message}');
+      debugPrint('${e.message}');
     }
   }
 
@@ -58,13 +62,13 @@ class _HomePageState extends State<HomePage> {
         'data': encrypted,
         'key': key,
       });
-      print('RETURNED FROM PLATFORM');
-      print(result);
+      debugPrint('RETURNED FROM PLATFORM');
+      debugPrint(result);
       setState(() {
         decryptedData = result;
       });
     } on PlatformException catch (e) {
-      print('${e.message}');
+      debugPrint('${e.message}');
     }
   }
 

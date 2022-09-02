@@ -15,7 +15,7 @@ class _EncryptionScreenState extends State<EncryptionScreen> {
 
   String encryptedData = '';
   String decryptedData = '';
-  var enc = "";
+  var enc;
   var key;
   var iv;
 
@@ -44,7 +44,7 @@ class _EncryptionScreenState extends State<EncryptionScreen> {
                     var jsonEncod = jsonEncode(body);
                     // 4. convert your jsonEncode request to string and pass to encryption with key and iv
                     enc = EncryptUtils.instance.encyptionFunc(msg: jsonEncod.toString(), iv: iv, key: key);
-                    debugPrint("Encrypt $enc");
+                    debugPrint("Encrypt ${enc.base64}");
                 });
                 
                 // 5. Encryption your key with RSA encryption logic
@@ -52,7 +52,7 @@ class _EncryptionScreenState extends State<EncryptionScreen> {
                 debugPrint("Encrypt Key $eKey");
 
                 // 6. pass your encrypted json and key to api
-                ApiClient.instance.myRepositoryMethod(enc, eKey);
+                ApiClient.instance.myRepositoryMethod(enc.base64, eKey);
 
               },
             ),

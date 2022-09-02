@@ -1,9 +1,4 @@
-
-import 'dart:convert';
-import 'dart:math';
-
 import 'package:encrypt/encrypt.dart';
-import 'package:pointycastle/asymmetric/api.dart';
 import 'package:fast_rsa/fast_rsa.dart' as rsa;
 
 class EncryptUtils {
@@ -31,7 +26,7 @@ MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCsIL91oVsuy/3VnNfdgClJ5d/xcfgmu4OE44lRxhi6
   //message encryption logic 
   encyptionFunc({msg, key, iv}){
     final encrypter = Encrypter(AES(key));
-    return encrypter.encrypt(msg, iv: iv).base64;
+    return encrypter.encrypt(msg, iv: iv);
   }
 
   //covert to base64
