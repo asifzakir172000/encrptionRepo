@@ -1,6 +1,3 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:encryption_file/home.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
