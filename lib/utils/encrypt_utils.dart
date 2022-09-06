@@ -1,11 +1,12 @@
 import 'dart:convert' as convert;
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:cryptography/cryptography.dart' as cryptography;
-import 'package:encryption_file/rsa_encryption/algorithms/rsa.dart';
-import 'package:encryption_file/rsa_encryption/encrypt_io.dart';
-import 'package:encryption_file/rsa_encryption/encrypter.dart';
 import 'package:encryption_file/utils/service.dart';
 import 'package:pointycastle/asymmetric/api.dart';
+import 'package:pointycastle/export.dart';
+import 'package:pointycastle/asymmetric/api.dart';
+import 'package:pointycastle/pointycastle.dart';
 
 class EncryptUtils {
 
@@ -15,15 +16,16 @@ class EncryptUtils {
 
 
   final plainText = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit';
-  final publicKey = '''-----BEGIN PUBLIC KEY-----
-MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCsIL91oVsuy/3VnNfdgClJ5d/x
-cfgmu4OE44lRxhi6jy25awQ5ZiSKSZI8X2pAYvAvj1Duv7/aeipU4w+rQIkXgoZG
-3eMbu5hhLHnCgNDtfI0MWmoOwZ7AcbLZPc4j3PGQKjaGTVz+XFFvTYls1Reo38ON
-03N3yqHEmIa57uvvSwIDAQAB
------END PUBLIC KEY-----''';
+//   final publicKey = '''-----BEGIN PUBLIC KEY-----
+// MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCsIL91oVsuy/3VnNfdgClJ5d/x
+// cfgmu4OE44lRxhi6jy25awQ5ZiSKSZI8X2pAYvAvj1Duv7/aeipU4w+rQIkXgoZG
+// 3eMbu5hhLHnCgNDtfI0MWmoOwZ7AcbLZPc4j3PGQKjaGTVz+XFFvTYls1Reo38ON
+// 03N3yqHEmIa57uvvSwIDAQAB
+// -----END PUBLIC KEY-----''';
 
-// final publicKey = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCsIL91oVsuy/3VnNfdgClJ5d/xcfgmu4OE44lRxhi6jy25awQ5ZiSKSZI8X2pAYvAvj1Duv7/aeipU4w+rQIkXgoZG3eMbu5hhLHnCgNDtfI0MWmoOwZ7AcbLZPc4j3PGQKjaGTVz+XFFvTYls1Reo38ON03N3yqHEmIa57uvvSwIDAQAB";
-  
+final publicKey = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCsIL91oVsuy/3VnNfdgClJ5d/xcfgmu4OE44lRxhi6jy25awQ5ZiSKSZI8X2pAYvAvj1Duv7/aeipU4w+rQIkXgoZG3eMbu5hhLHnCgNDtfI0MWmoOwZ7AcbLZPc4j3PGQKjaGTVz+XFFvTYls1Reo38ON03N3yqHEmIa57uvvSwIDAQAB";
+// final publicKey = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCzoN1rGpG4oIam1m2fup1ruY5enRGxF9KJtnhc2XZZoTn2mRz+oqFJEvgN0DsfNrjpAJRModM9qHFx4u2wEZgSjHvI2IgVp0t5R2Ji/v3bwwcYKy9MUhL6Qp24EYyi6awh8uK8BovNCM7IzWFOgBxTtOJ8oBUkko01QfIIG+uoAQIDAQAB";
+
   //creating dynamic AES256 key
   getSecretKey() async {
     final algorithm = cryptography.AesGcm.with256bits();
@@ -43,48 +45,65 @@ cfgmu4OE44lRxhi6jy25awQ5ZiSKSZI8X2pAYvAvj1Duv7/aeipU4w+rQIkXgoZG
     return tagIv;
   }
 
-  //message encryption logic 
-  // encyptionFunc({msg, key}){
-  //   var iv = getIv(key: key);
-  //   final encrypter = Encrypter(AES(key));
-  //   return encrypter.encrypt(msg, iv: iv);
-  // }
-
   //covert to base64
   base64({encryptText}){
     return encryptText.base64;
   }
 
-  //message decryption logic 
-  // decyptionFunc({msg, key}){
-  //   var iv = getIv(key: key);
-  //   final encrypter = Encrypter(AES(key));
-  //   return encrypter.decrypt(msg, iv: iv);
-  // }
+  Uint8List _processInBlocks(AsymmetricBlockCipher engine, Uint8List input) {
+    final numBlocks = input.length ~/ engine.inputBlockSize +
+        ((input.length % engine.inputBlockSize != 0) ? 1 : 0);
 
-  Future<T> parseKeyFromString<T extends RSAAsymmetricKey>(String key) async {
-  final parser = RSAKeyParser();
-  return parser.parse(key) as T;
-}
+    final output = Uint8List(numBlocks * engine.outputBlockSize);
+
+    var inputOffset = 0;
+    var outputOffset = 0;
+    while (inputOffset < input.length) {
+      final chunkSize = (inputOffset + engine.inputBlockSize <= input.length)
+          ? engine.inputBlockSize
+          : input.length - inputOffset;
+
+      outputOffset += engine.processBlock(
+          input, inputOffset, chunkSize, output, outputOffset);
+
+      inputOffset += chunkSize;
+    }
+
+    return (output.length == outputOffset)
+        ? output
+        : output.sublist(0, outputOffset);
+  }
+
+  ASN1Sequence _parseSequence(String keyTest) {
+    final keyBytes = Uint8List.fromList(convert.base64.decode(keyTest));
+    final asn1Parser = ASN1Parser(keyBytes);
+    return asn1Parser.nextObject() as ASN1Sequence;
+  }
+
+  ASN1Sequence _pkcs8PublicSequence(ASN1Sequence sequence) {
+    final ASN1Object bitString = sequence.elements![1];
+    final bytes = bitString.valueBytes?.sublist(1);
+    final parser = ASN1Parser(Uint8List.fromList(bytes!));
+
+    return parser.nextObject() as ASN1Sequence;
+  }
+
+  RSAAsymmetricKey _parsePublic(String keyTest) {
+    ASN1Sequence sequence = _pkcs8PublicSequence(_parseSequence(keyTest));
+    final modulus = (sequence.elements![0] as ASN1Integer).integer;
+    final exponent = (sequence.elements![1] as ASN1Integer).integer;
+
+    return RSAPublicKey(modulus!, exponent!);
+  }
 
   //key encryption logic with RSA 
   encryptSecretKey({keys}) async {
-    // var result = await rsa.RSA.encryptPKCS1v15(keys, publicKey);
-    // return result;
-    final result = await parseKeyFromString<RSAPublicKey>(publicKey);
-    // final result = await parseKeyFromFile<RSAPublicKey>("test/public.pem");
-    // final encrypter = Encrypter(enc.RSA(publicKey: result, encoding: enc.RSAEncoding.OAEP, digest: ));
-     final encrypter = Encrypter(
-         RSA(
-           publicKey: result,
-           encoding: RSAEncoding.OAEP,
-           digest: RSADigest.SHA256,
-         )
-     );
-    // final signer = Signer(RSASigner(RSASignDigest.SHA256, publicKey: result, ));
-    final encrypted = encrypter.encryptBytes(keys);
-    // final encrypted = signer.sign(keys).base64;
-    return encrypted.base64;
+    final myPublicKey = _parsePublic(publicKey) as RSAPublicKey;
+    final p = AsymmetricBlockCipher('RSA/NONE/OAEPWithSHA256AndMGF1Padding');
+    p.init(true, PublicKeyParameter<RSAPublicKey>(myPublicKey));
+    final result = _processInBlocks(p, keys);
+    final encode = convert.base64.encode(result);
+    return encode;
   }
 
 
@@ -117,7 +136,7 @@ cfgmu4OE44lRxhi6jy25awQ5ZiSKSZI8X2pAYvAvj1Duv7/aeipU4w+rQIkXgoZG
     // String encoded = convert.utf8.decode(decrypt);
     // print('decrypt: $encoded');
 
-    var eKey = await EncryptUtils.instance.encryptSecretKey(keys: secretKeyBytes);
+    var eKey = await encryptSecretKey(keys: secretKeyBytes);
     // 6. pass your encrypted json and key to api
     ApiClient.instance.myRepositoryMethod(encyptedData, eKey);
     
