@@ -39,16 +39,17 @@ class ApiClient {
 
   myRepositoryMethod(String data, String eKey) async {
     var body = {
-      "databinder": data,
-      "dataload": eKey,
+      "databinder": eKey,
+      "dataload": data,
     };
-     var token = "";
+    
+    var token = "";
     try{
-      
       var client = http.Client();
-      var endpointUrl = 'https://softpos.indianbank.in.worldline-solutions.com/api/checkVersion';
+      var endpointUrl = 'https://posdemo.aiolos.solutions/api/checkVersion'; //?databinder=$eKey&dataload=$data
       var url = Uri.parse(endpointUrl);
       debugPrint("url: $url");
+      debugPrint("json: ${jsonEncode(body)}");
 
       /* // check ssl pinning certificate  if ssl value is true then call the api
       var ssl = await checkSSL(url: endpointUrl);

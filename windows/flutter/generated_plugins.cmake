@@ -3,7 +3,6 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  fast_rsa
 )
 
 set(PLUGIN_BUNDLED_LIBRARIES)

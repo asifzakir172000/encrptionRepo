@@ -32,27 +32,27 @@ class _EncryptionScreenState extends State<EncryptionScreen> {
               onPressed: () async {
 
                 //1. genrate key and iv
-                key = EncryptUtils.instance.getSecretKey();
-                iv = EncryptUtils.instance.getIv();
-                debugPrint("Key ${key.base64}");
-                debugPrint("iv ${iv.base64}");
+                // key = EncryptUtils.instance.getSecretKey();
+                // iv = EncryptUtils.instance.getIv();
+                // debugPrint("Key ${key.base64}");
+                // debugPrint("iv ${iv.base64}");
 
                 setState(() {
                     // 2. make your request
-                    Map<String,dynamic> body = {"companyid": 1, "version":1};
+                    Map<String,String> body = {"companyid": "1", "version":"1"};
                     // 3. convert to jsonEncode
                     var jsonEncod = jsonEncode(body);
                     // 4. convert your jsonEncode request to string and pass to encryption with key and iv
-                    enc = EncryptUtils.instance.encyptionFunc(msg: jsonEncod.toString(), iv: iv, key: key);
-                    debugPrint("Encrypt ${enc.base64}");
+                    // enc = EncryptUtils.instance.encyptionFunc(msg: jsonEncod.toString(), key: key);
+                    EncryptUtils.instance.newEnc(msg: body.toString());
+                    // debugPrint("new $newEnc");
                 });
                 
                 // 5. Encryption your key with RSA encryption logic
-                var eKey = await EncryptUtils.instance.encryptSecretKey(keys: key.toString());
-                debugPrint("Encrypt Key $eKey");
+                // var eKey = await EncryptUtils.instance.encryptSecretKey(keys: key.toString());
 
                 // 6. pass your encrypted json and key to api
-                ApiClient.instance.myRepositoryMethod(enc.base64, eKey);
+                // ApiClient.instance.myRepositoryMethod(enc.base64, eKey);
 
               },
             ),
@@ -65,8 +65,8 @@ class _EncryptionScreenState extends State<EncryptionScreen> {
                 debugPrint("iv ${iv.base64}");
                 setState(() {
                   // 7. decypt the response with same key and iv that you created for encryption
-                  var de = EncryptUtils.instance.decyptionFunc(msg: enc, iv: iv, key: key);
-                  debugPrint("Decrypt $de");
+                  // var de = EncryptUtils.instance.decyptionFunc(msg: enc, key: key);
+                  // debugPrint("Decrypt $de");
                });
                }
 
